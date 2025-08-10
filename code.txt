@@ -1,0 +1,49 @@
+import cv2
+
+def detect_scratches(image_path):
+    # Read the image
+    image = cv2.imread(image_path)
+
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Apply Gaussian blur to reduce noise
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
+    # Use Canny edge detection to find edges in the image
+    edges = cv2.Canny(blurred, 50, 150)
+
+    # Find contours in the edges
+    contours, _ = cv2.findContours(edges.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Loop through the contours
+    for contour in contours:
+        # Calculate the area of the contour
+        area = cv2.contourArea(contour)
+        
+        # If the area is small, it might be a scratch
+        if area < 100:
+            # Draw a rectangle around the suspected scratch
+            x, y, w, h = cv2.boundingRect(contour)
+            cv2.rectangle(image, (x, y), (x + w, y + h), (255, 255, 0), 2,)
+            cv2.putText(image, "Scratch", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 22), 2)
+        else:
+            # Fit a circle around the contour to detect dents
+            (x, y), radius = cv2.minEnclosingCircle(contour)
+            center = (int(x), int(y))
+            radius = int(radius*0.5)
+            cv2.circle(image, center, radius, (0, 0, 255), 2)  # Red color for dents
+            
+            # Add text near the circle
+            cv2.putText(image, "Dent", (int(x - radius), int(y - radius - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (54, 344, 11), 2)  # Red text for dents
+
+    # Display the image with detected scratches or dent
+    cv2.imshow("Scratch or dent Detection", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# Path to the car image
+image_path = "cr.jpg"
+
+# Call the function to detect scratches
+detect_scratches(image_path)
